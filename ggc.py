@@ -97,18 +97,20 @@ Functions that check which numbers can be written as a sum from my list
 ##currently the best version
 global globlist
 
-def combinations(cd, md, sum, i, l):
+def combinations(cd, md, sum, i, l, q):
     ##returns sum of combinations
     ##current depth, max depth, sum, index, list
     global globlist
     for x in range(i, len(l)):
         if cd < md:
-            combinations(cd+1,md,sum+l[x],x,l)
+            combinations(cd+1,md,sum+l[x],x,l,q)
         else:
             try:
                 globlist[int((sum+l[x])/md)] += 1
+                if int((sum+l[x])/md) == 495:
+                    q.put(str(l[x]) + " + " + str(sum));
             except:
-                pass
+                q.put("WARNING: could not appent to "+ str(int((sum+l[x])/md)));
 
 def smallersum(n, s, upper, q):
     ##creates lis of e that can be written as the sum of n numbers from set s
@@ -116,9 +118,9 @@ def smallersum(n, s, upper, q):
     global globlist
     globlist = [0]*upper
     for x in range(0,len(s)):
-        combinations(2,n,s[x],x,s)
+        combinations(2,n,s[x],x,s,q)
         ##debug info, uses q
-        if(x%10 == 0):
+        if(x%4 == 0):
             q.put("For n:"+str(n)+" Progress:"+str(x)+"/"+str(len(s))+" Root:"+str(s[x]))
     ##return globlist
     for i in range(1,len(globlist)):
@@ -131,8 +133,15 @@ def smallersum(n, s, upper, q):
 Functions that combine everything for a quick test of number n
 """
 def smalltest(n,upper,q):
+    global globlist;
     s = betterlist(n,primes(upper))
-    return smallersum(n,s,upper*5,q)
+    sums = smallersum(n,s,upper*5,q)
+    # Write the globallist before we return the value
+    fh = open(str(n)+".txt","w");
+    for glob in globlist:
+        fh.write(str(glob)+"\n")
+    fh.close();
+    return sums
 
 def smalltest_wrapper(arg):
     output = smalltest(arg[0],arg[1],arg[2])
@@ -201,5 +210,5 @@ if __name__ == '__main__':
     ##Besides setting these numbers, also set time.sleep, recursion depth, frequency of debug info (ctrl+f debug)
     pass
     start = timeit.time.time()
-    betterbatch(2,10,100)
+    betterbatch(2,3,1000)
     print (timeit.time.time() - start)

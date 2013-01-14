@@ -1,3 +1,4 @@
+##Alternate way of writing combinations recursively, meant mostly to test logic respective to GB5
 import itertools
 import collections
 import sys
@@ -123,11 +124,7 @@ def smallersum(n, s, upper, q):
     ##uses my own function for combinations so they don't all stay stored in memory
     global globlist
     globlist = [0]*upper
-    for x in range(0,len(s)):
-        combinations(2,n,s[x],x,s,q)
-        ##debug info, uses q
-        if(x%4 == 0):
-            q.put("For n:"+str(n)+" Progress:"+str(x)+"/"+str(len(s))+" Root:"+str(s[x]))
+    combinations(1,n,0,0,s,q)
     ##return globlist
     for i in range(1,len(globlist)):
         if globlist[i] == 0:
@@ -143,7 +140,7 @@ def smalltest(n,upper,q):
     s = betterlist(n,primes(upper))
     sums = smallersum(n,s,upper*5,q)
     # Write the globallist before we return the value
-    fh = open(str(n)+"_blarg.txt","w");
+    fh = open(str(n)+"_GB7.txt","w");
     for glob in globlist:
         fh.write(str(glob)+"\n")
     fh.close();
@@ -216,7 +213,7 @@ if __name__ == '__main__':
     ##Besides setting these numbers, also set time.sleep, recursion depth, frequency of debug info (ctrl+f debug)
     pass
     start = timeit.time.time()
-    ##betterbatch(4,5,2000)
+    ##betterbatch(2,4,10000)
     manager = Manager()
     q = manager.Queue()
     smalltest(6,500,q)

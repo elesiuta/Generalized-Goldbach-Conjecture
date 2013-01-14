@@ -20,6 +20,8 @@ Prime Number Functions
 
 def pf (n,p):
     ##prime factorization (modified to get rid of duplicates)
+    ##returns prime factors of n
+    ##input p is a list of prime numbers
     from math import sqrt
     n = int(n)
     factors = []
@@ -42,6 +44,7 @@ def pf (n,p):
     return factors
 
 def primes(e):
+    ##returns all the primes <= e
     primelist = [1, 2, 3, 5]
     tempprimelist = [2]
     tempprimesq = 4
@@ -68,9 +71,13 @@ def betterlist(n, primes):
     ##makes the set of coprimes that can be used to sum to any number multiple of n, requires list of primes (size depends on how much to test)
     maxprime = primes[-1]
     p = copy.copy(primes)
+
+    ##eg for goldbach's conjecture, this bit of code will remove 2, which only affects 4 = 2 + 2
+    ##according to my rules though, the number must have a %n == 1 therefore these numbers or any multiples can't be used
     for x in pf(n,p):
         if (primes.count(x)==1):
             primes.remove(x)
+
     coprimes = []
     temp = []
     for x in primes:
@@ -87,6 +94,7 @@ def betterlist(n, primes):
             coprimes.append(x)
             for y in pf(x,p):
                 temp.remove(y)
+    coprimes.remove(1)
     return coprimes
 
 """
@@ -99,16 +107,14 @@ global globlist
 
 def combinations(cd, md, sum, i, l, q):
     ##returns sum of combinations
-    ##current depth, max depth, sum, index, list
+    ##current depth, max depth, sum, index, list, multi threaded queue
     global globlist
     for x in range(i, len(l)):
         if cd < md:
             combinations(cd+1,md,sum+l[x],x,l,q)
         else:
             try:
-                globlist[int((sum+l[x])/md)] += 1
-                if int((sum+l[x])/md) == 495:
-                    q.put(str(l[x]) + " + " + str(sum));
+                globlist[(sum+l[x])//md] += 1
             except:
                 q.put("WARNING: could not appent to "+ str(int((sum+l[x])/md)));
 
@@ -137,7 +143,7 @@ def smalltest(n,upper,q):
     s = betterlist(n,primes(upper))
     sums = smallersum(n,s,upper*5,q)
     # Write the globallist before we return the value
-    fh = open(str(n)+".txt","w");
+    fh = open(str(n)+"_blarg.txt","w");
     for glob in globlist:
         fh.write(str(glob)+"\n")
     fh.close();
@@ -183,7 +189,6 @@ def betterbatch(start, stop, size):
     reported = stop-start+1
     awake = 0
     while (True):
-        if (a.ready()): break
         remaining = a._number_left
         if (remaining != reported):
             print ("Waiting for", remaining, "tasks to complete...")
@@ -195,7 +200,8 @@ def betterbatch(start, stop, size):
             awake += 1
         while not q.empty():
             print(q.get())
-        time.sleep(60)
+        if (a.ready()): break
+        time.sleep(10)
     b = a.get()
     pool.join()
     ##for x in b:
@@ -210,5 +216,8 @@ if __name__ == '__main__':
     ##Besides setting these numbers, also set time.sleep, recursion depth, frequency of debug info (ctrl+f debug)
     pass
     start = timeit.time.time()
-    betterbatch(2,3,1000)
+    ##betterbatch(4,5,2000)
+    manager = Manager()
+    q = manager.Queue()
+    smalltest(6,500,q)
     print (timeit.time.time() - start)

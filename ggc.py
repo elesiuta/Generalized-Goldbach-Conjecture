@@ -1,3 +1,4 @@
+##Try unfolding combinations from GB7
 import itertools
 import collections
 import sys
@@ -105,30 +106,35 @@ Functions that check which numbers can be written as a sum from my list
 ##currently the best version
 global globlist
 
-def combinations(n, l, lenl, q):
+def combinations(cd, md, sums, index, l, lenl, q):
     ##returns sum of combinations
-    ##n=4, list, len(l), multi threaded queue
+    ##current array depth, max depth = n, sums (at each depth), index (at each depth), list of coprimes, multi threaded queue
     global globlist
-    for D in range(0, lenl):
-        sumD = l[D]
-        for C in range(D, lenl):
-            sumC = sumD + l[C]
-            for B in range(C, lenl):
-                sumB = sumC + l[B]
-                for A in range(B, lenl):
-                    try:
-                        globlist[(sumB + l[A])//n] += 1
-                    except:
-                        q.put("WARNING: could not appent to "+ str(int((sumB + l[A])//n)));
 
-
+    while(True):
+        sums[cd] = sums[cd-1] + l[index[cd]]
+        index[cd] += 1
+        cd += 1
+        if cd == md:
+            for x in range(index[-2]-1,lenl):
+                try:
+                    globlist[(sums[-2] + l[x])//md] += 1
+                except:
+                    q.put("WARNING: could not appent to "+ str(int((sums[-2] + l[x])/md)));
+            cd -= 1
+            while(index[cd] == lenl):
+                cd -= 1
+            for x in range(cd, md):
+                index[x+1] = index[x]
+            if (cd == 0):
+                break
 
 def smallersum(n, s, upper, q):
     ##creates lis of e that can be written as the sum of n numbers from set s
     ##uses my own function for combinations so they don't all stay stored in memory
     global globlist
     globlist = [0]*upper
-    combinations(n,s,len(s),q)
+    combinations(1,int(n),[0]*(n+1),[0]*(n+1),s,len(s),q)
     ##return globlist
     for i in range(1,len(globlist)):
         if globlist[i] == 0:
@@ -144,7 +150,7 @@ def smalltest(n,upper,q):
     s = betterlist(n,primes(upper))
     sums = smallersum(n,s,upper*5,q)
     # Write the globallist before we return the value
-    fh = open(str(n)+"_GB6.txt","w");
+    fh = open(str(n)+"_GB2016.txt","w");
     for glob in globlist:
         fh.write(str(glob)+"\n")
     fh.close();
@@ -209,6 +215,23 @@ def betterbatch(start, stop, size):
         ##print (str(start) + ' ' + str(x))
         ##start += 1
     print(b)
+    
+    
+    
+def subsets_with_sum(n, target, with_replacement=True):
+    lst = sorted(betterlist(n,primes(target)))
+    x = 0 if with_replacement else 1
+    def _a(idx, l, r, t):
+        if t == sum(l): r.append(l)
+        elif t < sum(l): return
+        for u in range(idx, len(lst)):
+            _a(u + x, l + [lst[u]], r, t)
+        s = []
+        for i in r:
+            if (len(i)==n):
+                s.append(i)
+        return s
+    return _a(0, [], [], target)
 """
 Main
 """
@@ -216,9 +239,9 @@ if __name__ == '__main__':
     ##any parallel processes can only be run here (as defined by Python specification)
     ##Besides setting these numbers, also set time.sleep, recursion depth, frequency of debug info (ctrl+f debug)
     pass
-    start = timeit.time.time()
-    ##betterbatch(4,5,1000)
-    manager = Manager()
-    q = manager.Queue()
-    smalltest(4,2000,q)
-    print (timeit.time.time() - start)
+    ##start = timeit.time.time()
+    ##betterbatch(4,5,2000)
+    ##manager = Manager()
+    ##q = manager.Queue()
+    ##smalltest(4,2000,q)
+    ##print (timeit.time.time() - start)

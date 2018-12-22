@@ -1,29 +1,20 @@
-##Try unfolding combinations from GB7
-import itertools
-import collections
-import sys
-from multiprocessing import Pool, cpu_count, Queue, queues, Manager
-import timeit
-import time
-import ctypes
+# Eric Lesiuta
+# Program to generate comets for my generalization of Goldbach's Conjecture
+
+# Changes (2018)
+# Rewritten to be slightly more readable than my original version from 2012
+# Removed parallelized functions (may rewrite later)
+
+import math
 import copy
-##Python does not seem to follow any rules like c/java when it comes to passing
-##by reference or value, so I'll just use copy!
 
-##default is 1000
-sys.setrecursionlimit(100000)
+def factor(n,p):
+    """factorization without duplicates.
 
-PROCESSES = cpu_count()
-
-"""
-Prime Number Functions
-"""
-
-def pf (n,p):
-    ##prime factorization (modified to get rid of duplicates)
-    ##returns prime factors of n
-    ##input p is a list of prime numbers
-    from math import sqrt
+    Keyword arguments:
+    n -- the number for factorization
+    p -- the list of possible factors (prime or coprime list)
+    """
     n = int(n)
     factors = []
     if n%2 == 0:
@@ -31,7 +22,7 @@ def pf (n,p):
         factors.append(2)
     while n%2 == 0:
         n//=2
-    sqrtn = int(sqrt(n)) + 1
+    sqrtn = int(math.sqrt(n)) + 1
     for x in p[2:]:
         if n%x == 0:
             factors.append(x)
@@ -45,8 +36,8 @@ def pf (n,p):
     return factors
 
 def primes(e):
-    ##returns all the primes <= e
-    primelist = [1, 2, 3, 5]
+    """returns a list of primes <= e"""
+    primelist = [2, 3, 5]
     tempprimelist = [2]
     tempprimesq = 4
     s = 7
@@ -64,18 +55,14 @@ def primes(e):
         s+=2
     return primelist
 
-"""
-Functions that make my list of primes and coprimes
-"""
-##good, need to use something other than python to improve further
-def betterlist(n, primes):
-    ##makes the set of coprimes that can be used to sum to any number multiple of n, requires list of primes (size depends on how much to test)
+def coprimelist(n, primes):
+    """returns the set of coprimes that can be used to sum to any number multiple of n, requires list of primes (size depends on how much to test)"""
     maxprime = primes[-1]
     p = copy.copy(primes)
 
-    ##eg for goldbach's conjecture, this bit of code will remove 2, which only affects 4 = 2 + 2
-    ##according to my rules though, the number must have a %n == 1 therefore these numbers or any multiples can't be used
-    for x in pf(n,p):
+    # eg for goldbach's conjecture, this bit of code will remove 2, which only affects 4 = 2 + 2
+    # according to my rules though, the number must have a %n == 1 therefore these numbers or any multiples can't be used
+    for x in factor(n,p):
         if (primes.count(x)==1):
             primes.remove(x)
 
@@ -87,161 +74,70 @@ def betterlist(n, primes):
         else:
             temp.append(x)
     for x in range(n+1,maxprime,n):
-        has = True
-        for y in pf(x,p):
+        isCoprime = True
+        for y in factor(x,p):
             if temp.count(y) == 0:
-                has = False
-        if has == True:
+                isCoprime = False
+        if isCoprime:
             coprimes.append(x)
-            for y in pf(x,p):
+            for y in factor(x,p):
                 temp.remove(y)
-    coprimes.remove(1)
     return coprimes
 
-"""
-Functions that check which numbers can be written as a sum from my list
-"""
-##SINGLE PROCESS
-##AHHHHHH THIS LOOKS DISGUSTING BUT I DONT KNOW HOW ELSE TO DO THIS
-##currently the best version
-global globlist
-
-def combinations(cd, md, sums, index, l, lenl, q):
-    ##returns sum of combinations
-    ##current array depth, max depth = n, sums (at each depth), index (at each depth), list of coprimes, multi threaded queue
-    global globlist
+def createcomet(n,limit):
+    """generates a comet for a generalization with base n, for all numbers up to limit
+    the output comet[i] is the number of ways n*i can be represented as a sum of n coprimes from coprimelist
+    values for i > limit//n are still included but incorrect"""
+    
+    # these variable names make more sense in the previous, recursive version of this function
+    cd = 1 ##current array depth
+    md = int(n) ##max depth = n
+    sums = [0]*(n+1) ##sums (at each depth)
+    index = [0]*(n+1) ##index (at each depth)
+    coprimes = coprimelist(n,primes(limit))
+    lencp = len(coprimes)
+    limit *= 5 ##arbitrary multiplier to prevent index out of range error
+    comet = [0]*(limit)
 
     while(True):
-        sums[cd] = sums[cd-1] + l[index[cd]]
+        sums[cd] = sums[cd-1] + coprimes[index[cd]]
         index[cd] += 1
         cd += 1
         if cd == md:
-            for x in range(index[-2]-1,lenl):
-                try:
-                    globlist[(sums[-2] + l[x])//md] += 1
-                except:
-                    q.put("WARNING: could not appent to "+ str(int((sums[-2] + l[x])/md)));
+            for x in range(index[-2]-1,lencp):
+                y = (sums[-2] + coprimes[x])//md
+                if y < limit:
+                    comet[y] += 1
+                else:
+                    print("WARNING: out of range "+ str(y))
             cd -= 1
-            while(index[cd] == lenl):
+            while(index[cd] == lencp):
                 cd -= 1
             for x in range(cd, md):
                 index[x+1] = index[x]
             if (cd == 0):
                 break
 
-def smallersum(n, s, upper, q):
-    ##creates lis of e that can be written as the sum of n numbers from set s
-    ##uses my own function for combinations so they don't all stay stored in memory
-    global globlist
-    globlist = [0]*upper
-    combinations(1,int(n),[0]*(n+1),[0]*(n+1),s,len(s),q)
-    ##return globlist
-    for i in range(1,len(globlist)):
-        if globlist[i] == 0:
-            return (i-1)*n
-    return (i*n)
+    return comet
 
+def writecomet(comet):
+    """writes the comet/distribution with each entry on a new line"""
+    f = open(str(n)+"_GB2018.txt","w")
+    for x in comet:
+        f.write(str(x)+"\n")
+    f.close()
 
-"""
-Functions that combine everything for a quick test of number n
-"""
-def smalltest(n,upper,q):
-    global globlist;
-    s = betterlist(n,primes(upper))
-    sums = smallersum(n,s,upper*5,q)
-    # Write the globallist before we return the value
-    fh = open(str(n)+"_GB2016.txt","w");
-    for glob in globlist:
-        fh.write(str(glob)+"\n")
-    fh.close();
-    return sums
+def plotcomet(n,limit,comet):
+    """plots the comet/distribution, the number of ways 'x' can be written as a sum of 'n' coprimes from the set generated with coprimelist"""
+    import matplotlib.pyplot as plt
+    x = [i for i in range(0,limit,n)]
+    plt.scatter(x,comet[:len(x)])
+    plt.grid(True)
+    plt.savefig(str(n)+"_GB2018.png")
+    plt.clf()
 
-def smalltest_wrapper(arg):
-    output = smalltest(arg[0],arg[1],arg[2])
-    arg[2].put([arg[0],output])
-    return output
-
-"""
-Test a bunch of n
-"""
-##good for small batches
-def batch(start, stop, size):
-    p = primes(size)
-    for n in range(start,stop):
-        a = copy.copy(p)
-        s = betterlist(n,a)
-        print(smallersum(n,s,size*5))
-
-##good for big batches, but doesn't show progress
-def asyncbatch(start, stop, size):
-    pool = Pool(PROCESSES)
-    return pool.map_async(smalltest_wrapper, [(n,size) for n in range(start,stop)])
-
-def multibatch(start, stop, size):
-    pool = Pool(PROCESSES)
-    a = pool.map(smalltest_wrapper, [(n,size) for n in range(start,stop)])
-    for x in a:
-        print (str(start) + ' ' + str(x))
-        start += 1
-    print(a)
-
-##Now shows Progress! Uses Manager and Queue, breaks some older functions
-def betterbatch(start, stop, size):
-    print("Using", PROCESSES, "Cores")
-    manager = Manager()
-    q = manager.Queue()
-    pool = Pool(PROCESSES)
-    a = pool.map_async(smalltest_wrapper, [(n,size,q) for n in range(start,stop)])
-    pool.close()
-    reported = stop-start+1
-    awake = 0
-    while (True):
-        remaining = a._number_left
-        if (remaining != reported):
-            print ("Waiting for", remaining, "tasks to complete...")
-            reported = remaining
-        elif (awake > 10):
-            print ("Waiting for", remaining, "tasks to complete... I'm Awake!")
-            awake = 0
-        else:
-            awake += 1
-        while not q.empty():
-            print(q.get())
-        if (a.ready()): break
-        time.sleep(10)
-    b = a.get()
-    pool.join()
-    ##for x in b:
-        ##print (str(start) + ' ' + str(x))
-        ##start += 1
-    print(b)
-    
-    
-    
-def subsets_with_sum(n, target, with_replacement=True):
-    lst = sorted(betterlist(n,primes(target)))
-    x = 0 if with_replacement else 1
-    def _a(idx, l, r, t):
-        if t == sum(l): r.append(l)
-        elif t < sum(l): return
-        for u in range(idx, len(lst)):
-            _a(u + x, l + [lst[u]], r, t)
-        s = []
-        for i in r:
-            if (len(i)==n):
-                s.append(i)
-        return s
-    return _a(0, [], [], target)
-"""
-Main
-"""
-if __name__ == '__main__':
-    ##any parallel processes can only be run here (as defined by Python specification)
-    ##Besides setting these numbers, also set time.sleep, recursion depth, frequency of debug info (ctrl+f debug)
-    pass
-    ##start = timeit.time.time()
-    ##betterbatch(4,5,2000)
-    ##manager = Manager()
-    ##q = manager.Queue()
-    ##smalltest(4,2000,q)
-    ##print (timeit.time.time() - start)
+def writeandplot(n,limit):
+    """generates, writes and plots the distribution"""
+    comet = createcomet(n,limit)
+    writecomet(comet)
+    plotcomet(n,limit,comet)

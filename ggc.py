@@ -129,9 +129,11 @@ def plotcomet(n,limit,comet):
     """plots the comet/distribution, the number of ways 'x' can be written as a sum of 'n' coprimes from the set generated with coprimelist"""
     import matplotlib.pyplot as plt
     X = [x for x in range(0,limit,n)]
-    plt.scatter(X,comet[:len(X)])
+    Y = comet[:len(X)]
+    plt.figure(figsize=(15, 15))
+    plt.scatter(X,Y,s=1)
     plt.grid(True)
-    plt.savefig(str(n)+"_GB2018.png")
+    plt.savefig(str(n)+"_GB2018.png", format="png", dpi=400)
     plt.clf()
 
 def writeandplot(n,limit):

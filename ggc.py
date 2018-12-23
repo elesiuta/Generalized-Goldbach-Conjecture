@@ -16,14 +16,12 @@ def factor(n,p):
     p -- the list of possible factors (prime or coprime list)
     """
     n = int(n)
+    if p.count(1) == 1:
+        p = copy.copy(p)
+        p.remove(1)
     factors = []
-    if n%2 == 0:
-        n//=2
-        factors.append(2)
-    while n%2 == 0:
-        n//=2
     sqrtn = int(math.sqrt(n)) + 1
-    for x in p[2:]:
+    for x in p:
         if n%x == 0:
             factors.append(x)
             n //= x
@@ -56,32 +54,32 @@ def primes(e):
     return primelist
 
 def coprimelist(n, primes):
-    """returns the set of coprimes that can be used to sum to any number multiple of n, requires list of primes (size depends on how much to test)"""
+    """returns the set of coprimes that can be used to sum to any number that is a multiple of n and > n**2"""
+    primes = copy.copy(primes)
     maxprime = primes[-1]
-    p = copy.copy(primes)
 
     # eg for goldbach's conjecture, this bit of code will remove 2, which only affects 4 = 2 + 2
-    # according to my rules though, the number must have a %n == 1 therefore these numbers or any multiples can't be used
-    for x in factor(n,p):
+    # according to my rules though, each number must have a %n == 1 therefore these numbers or any multiples can't be used
+    for x in factor(n,primes):
         if (primes.count(x)==1):
             primes.remove(x)
 
     coprimes = []
-    temp = []
+    remainingPrimeFactors = []
     for x in primes:
         if x%n == 1:
             coprimes.append(x)
         else:
-            temp.append(x)
+            remainingPrimeFactors.append(x)
     for x in range(n+1,maxprime,n):
         isCoprime = True
-        for y in factor(x,p):
-            if temp.count(y) == 0:
+        for f in factor(x,primes):
+            if f not in remainingPrimeFactors:
                 isCoprime = False
         if isCoprime:
             coprimes.append(x)
-            for y in factor(x,p):
-                temp.remove(y)
+            for f in factor(x,primes):
+                remainingPrimeFactors.remove(f)
     return coprimes
 
 def createcomet(n,limit):
@@ -120,7 +118,7 @@ def createcomet(n,limit):
 
     return comet
 
-def writecomet(comet):
+def writecomet(n,comet):
     """writes the comet/distribution with each entry on a new line"""
     f = open(str(n)+"_GB2018.txt","w")
     for x in comet:
@@ -130,8 +128,8 @@ def writecomet(comet):
 def plotcomet(n,limit,comet):
     """plots the comet/distribution, the number of ways 'x' can be written as a sum of 'n' coprimes from the set generated with coprimelist"""
     import matplotlib.pyplot as plt
-    x = [i for i in range(0,limit,n)]
-    plt.scatter(x,comet[:len(x)])
+    X = [x for x in range(0,limit,n)]
+    plt.scatter(X,comet[:len(X)])
     plt.grid(True)
     plt.savefig(str(n)+"_GB2018.png")
     plt.clf()
@@ -139,5 +137,5 @@ def plotcomet(n,limit,comet):
 def writeandplot(n,limit):
     """generates, writes and plots the distribution"""
     comet = createcomet(n,limit)
-    writecomet(comet)
+    writecomet(n,comet)
     plotcomet(n,limit,comet)

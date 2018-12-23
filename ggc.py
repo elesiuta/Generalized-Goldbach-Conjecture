@@ -85,7 +85,7 @@ def coprimelist(n, primes):
 def createcomet(n,limit):
     """generates a comet for a generalization with base n, for all numbers up to limit
     the output comet[i] is the number of ways n*i can be represented as a sum of n coprimes from coprimelist
-    values for i > limit//n are still included but incorrect"""
+    """
     
     # these variable names make more sense in the previous, recursive version of this function
     cd = 1 ##current array depth
@@ -94,7 +94,6 @@ def createcomet(n,limit):
     index = [0]*(n+1) ##index (at each depth)
     coprimes = coprimelist(n,primes(limit))
     lencp = len(coprimes)
-    limit *= 5 ##arbitrary multiplier to prevent index out of range error
     comet = [0]*(limit)
 
     while(True):
@@ -104,10 +103,7 @@ def createcomet(n,limit):
         if cd == md:
             for x in range(index[-2]-1,lencp):
                 y = (sums[-2] + coprimes[x])//md
-                if y < limit:
-                    comet[y] += 1
-                else:
-                    print("WARNING: out of range "+ str(y))
+                comet[y] += 1
             cd -= 1
             while(index[cd] == lencp):
                 cd -= 1
@@ -116,7 +112,7 @@ def createcomet(n,limit):
             if (cd == 0):
                 break
 
-    return comet
+    return comet[:limit//n+1]
 
 def writecomet(n,comet):
     """writes the comet/distribution with each entry on a new line"""
@@ -128,7 +124,7 @@ def writecomet(n,comet):
 def plotcomet(n,limit,comet):
     """plots the comet/distribution, the number of ways 'x' can be written as a sum of 'n' coprimes from the set generated with coprimelist"""
     import matplotlib.pyplot as plt
-    X = [x for x in range(0,limit,n)]
+    X = [x for x in range(0,limit+1,n)]
     Y = comet[:len(X)]
     plt.figure(figsize=(15, 15))
     plt.scatter(X,Y,s=1)

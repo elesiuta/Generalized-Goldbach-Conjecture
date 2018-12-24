@@ -116,7 +116,7 @@ def createcomet(n,limit):
 
 def writecomet(n,comet):
     """writes the comet/distribution with each entry on a new line"""
-    f = open(str(n)+"_GB2018.txt","w")
+    f = open("n="+str(n)+".txt","w")
     for x in comet:
         f.write(str(x)+"\n")
     f.close()
@@ -129,7 +129,7 @@ def plotcomet(n,limit,comet):
     plt.figure(figsize=(15, 15))
     plt.scatter(X,Y,s=1)
     plt.grid(True)
-    plt.savefig(str(n)+"_GB2018.png", format="png", dpi=400)
+    plt.savefig("n="+str(n)+".png", format="png", dpi=400)
     plt.clf()
 
 def writeandplot(n,limit):

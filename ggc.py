@@ -36,7 +36,7 @@ def factor(n, p):
 
 
 def primes(stop):
-    """returns a list of primes <= e"""
+    """returns a list of primes <= stop"""
     primelist = [2, 3, 5]
     tempprimelist = [2]
     tempprimesq = 4

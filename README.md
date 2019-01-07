@@ -11,3 +11,5 @@ When n = 2, this is equivalent to Goldbach's conjecture, with the minimal set of
 Since the only even number that can be written as a sum using 2 is 4 = 2 + 2, this has no effect on any other number.
 
 See the code for a clearer and more precise description, and to test it for yourself.
+
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.2525427.svg)](https://doi.org/10.5281/zenodo.2525427)

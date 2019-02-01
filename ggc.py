@@ -3,8 +3,9 @@
 
 
 def coprimelist(n, stop):
-    """returns the minimal list of coprimes where each element modulo n = 1
-    every number that is a multiple of n and > n**2 can be written as the sum of n items from this list
+    """returns the minimal list of coprimes where each element modulo n = 1.
+    every number that is a multiple of n and > n**2 can be written as the sum
+    of n items from this list.
     """
     coprimes = [n+1]
     for i in range(n+1, stop, n):
@@ -18,18 +19,18 @@ def coprimelist(n, stop):
 
 
 def createcomet(n, stop, coprimes):
-    """generates a comet for the generalization using multiples of n, for all numbers up to stop
-    the output comet[i] is the number of ways n*i can be represented as a sum of n coprimes from coprimelist
+    """generates a comet for the generalization using multiples of n, for all
+    numbers up to stop.
+    output comet[i] is the number of ways n*i can be represented as a sum of n
+    coprimes from coprimelist.
     """
-
-    # these variable names make more sense in the previous, recursive version of this function
+    # unrolled version of the recursive function
     cd = 1  # current array depth
     md = int(n)  # max depth = n
     sums = [0]*(n+1)  # sums (at each depth)
     index = [0]*(n+1)  # index (at each depth)
     lencp = len(coprimes)
     comet = [0]*(stop)
-
     while(True):
         sums[cd] = sums[cd-1] + coprimes[index[cd]]
         index[cd] += 1
@@ -45,7 +46,6 @@ def createcomet(n, stop, coprimes):
                 index[x+1] = index[x]
             if (cd == 0):
                 break
-
     return comet[:stop//n+1]
 
 
@@ -64,16 +64,11 @@ def gcd(a, b):
         return a
 
 
-def factor(n, p):
-    """factorization without duplicates.
-
-    Keyword arguments:
-    n -- the number for factorization
-    p -- the list of possible factors (prime or coprime list)
-    """
+def factor(n, coprimes):
+    """factorization without duplicates."""
     n = int(n)
+    p = coprimes[:]
     if 1 in p:
-        p = p[:]
         p.remove(1)
     factors = []
     sqrtn = int(n**0.5) + 1
@@ -85,7 +80,7 @@ def factor(n, p):
             n //= x
         if ((n == 1) | (x > sqrtn)):
             break
-    if n != 1:  # if it is prime, or has a prime factor>sqrt(n) (there can only be 1)
+    if n != 1:
         factors.append(n)
     return factors
 
@@ -112,19 +107,21 @@ def primes(stop):
 
 
 def fastcoprimelist(n, primes):
-    """returns the minimal list of coprimes where each element modulo n = 1
-    every number that is a multiple of n and > n**2 can be written as the sum of n items from this list
-    optimized to run quickly for generating longer lists of coprimes when given a list of primes
+    """returns the minimal list of coprimes where each element modulo n = 1.
+    every number that is a multiple of n and > n**2 can be written as the sum
+    of n items from this list.
+    optimized to run quickly for generating longer lists of coprimes when
+    given a list of primes.
     """
     primes = primes[:]
     maxprime = primes[-1]
-
-    # eg for goldbach's conjecture, this bit of code will remove 2, which only affects 4 = 2 + 2
-    # according to my rules though, each number must have a %n == 1 therefore these numbers or any multiples can't be used
+    # according to my rules, each number must have a %n == 1 therefore these
+    # numbers or any multiples can't be used
+    # eg for goldbach's conjecture, this bit of code will remove 2, which only
+    # affects 4 = 2 + 2
     for x in factor(n, primes):
         if x in primes:
             primes.remove(x)
-
     coprimes = []
     remainingPrimeFactors = []
     for x in primes:
@@ -144,21 +141,6 @@ def fastcoprimelist(n, primes):
     return coprimes
 
 
-def readme():
-    print("Goldbach's conjecture originally states every integer greater than 2 (or 5 if 1\n"
-          "is not considered to be prime) can be written as the sum of 3 primes or\n"
-          "equivalently every even integer greater than 2 can be written as the sum of 2\n"
-          "primes.\n\n"
-          "In this generalization, every integer greater than n squared that is a multiple\n"
-          "of n can be written as the sum of n coprimes from the minimal set of coprime\n"
-          "numbers where each number of the set modulo n is 1.\n\n"
-          "When n = 2, this is equivalent to Goldbach's conjecture, with the minimal set of\n"
-          "coprime numbers simply being the set of prime numbers with the exception of 2\n"
-          "being removed since 2 mod 2 = 0.\n\n"
-          "Since the only even number that can be written as a sum using 2 is 4 = 2 + 2,\n"
-          "this has no effect on any other number.")
-
-
 def writecomet(n, comet):
     """writes the comet/distribution with each entry on a new line"""
     f = open("n="+str(n)+".txt", "w")
@@ -168,7 +150,8 @@ def writecomet(n, comet):
 
 
 def plotcomet(n, stop, comet):
-    """plots the comet/distribution, the number of ways 'x' can be written as a sum of 'n' coprimes from the set generated with coprimelist"""
+    """plots the comet/distribution, the number of ways 'x' can be written as
+    a sum of 'n' coprimes from the set generated with coprimelist"""
     import matplotlib.pyplot as plt
     X = [x for x in range(0, stop+1, n)]
     Y = comet[:len(X)]
@@ -189,6 +172,20 @@ def writeandplot(n, stop):
 
 if __name__ == "__main__":
     import argparse
+    coprimes = None
+    comet = None
+    readme = ("Goldbach's conjecture originally states every integer greater than 2 (or 5 if 1\n"
+              "is not considered to be prime) can be written as the sum of 3 primes or\n"
+              "equivalently every even integer greater than 2 can be written as the sum of 2\n"
+              "primes.\n\n"
+              "In this generalization, every integer greater than n squared that is a multiple\n"
+              "of n can be written as the sum of n coprimes from the minimal set of coprime\n"
+              "numbers where each number of the set modulo n is 1.\n\n"
+              "When n = 2, this is equivalent to Goldbach's conjecture, with the minimal set of\n"
+              "coprime numbers simply being the set of prime numbers with the exception of 2\n"
+              "being removed since 2 mod 2 = 0.\n\n"
+              "Since the only even number that can be written as a sum using 2 is 4 = 2 + 2,\n"
+              "this has no effect on any other number.")
 
     parser = argparse.ArgumentParser(description="Test a generalization of Goldbach's conjecture")
     parser.add_argument("--readme", action="store_true",
@@ -205,14 +202,10 @@ if __name__ == "__main__":
                         help="writes comet 'n=N.txt' in the current directory")
     parser.add_argument("-p", "--plot", action="store_true",
                         help="saves plot 'n=N.png' of the comet in the current directory")
-
     args = parser.parse_args()
 
-    coprimes = None
-    comet = None
-
     if (args.readme):
-        readme()
+        print(readme)
 
     if (args.coprimes):
         coprimes = coprimelist(args.n, args.s)
